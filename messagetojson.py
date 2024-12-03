@@ -5,9 +5,14 @@ from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import Message
 import config
+import airesponce
 
 bot = Bot(token=config.API_TOKEN)
 dp = Dispatcher()
+
+@dp.message(Command(commands=['summary']))
+async def summary(message: Message):
+    await message.reply(airesponce.answer(f"messages/chathistory{message.chat.id}.json"))
 
 @dp.message()
 async def handle_message(message: Message):
