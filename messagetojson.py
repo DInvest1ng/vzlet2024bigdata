@@ -10,19 +10,13 @@ API_TOKEN = '7000026321:AAGefkqhq_wUvj2WVTAsxgH8sM7YAo8dKY0'
 bot = Bot(token=API_TOKEN)
 dp = Dispatcher()
 
-MESSAGES_FILE = 'messages.json'
-
-if not os.path.exists(MESSAGES_FILE):
-    with open(MESSAGES_FILE, 'w') as f:
-        json.dump([], f)
-
-@dp.message(Command(commands=['start', 'help']))
-async def send_welcome(message: Message):
-    await message.reply("Привет! Отправь мне сообщение, и я сохраню его в JSON файл.")
-
 @dp.message()
 async def handle_message(message: Message):
-    with open(MESSAGES_FILE, 'r') as f:
+    if not os.path.exists(f"messages/chathistory{message.chat.id}.json"):
+        with open(f"messages/chathistory{message.chat.id}.json", 'w', encoding='utf-8') as f:
+            json.dump([], f, ensure_ascii=False, indent=4)
+
+    with open(f"messages/chathistory{message.chat.id}.json", 'r', encoding='utf-8') as f:
         messages = json.load(f)
 
     new_message = {
@@ -31,14 +25,13 @@ async def handle_message(message: Message):
         'sender_id': message.from_user.id,
         'reply_to_username': message.reply_to_message.from_user.username if message.reply_to_message else None,
         'reply_to_id': message.reply_to_message.from_user.id if message.reply_to_message else None,
+        'reply_to_text': message.reply_to_message.text if message.reply_to_message else None,
         'date': message.date.isoformat()
     }
     messages.append(new_message)
 
-    with open(MESSAGES_FILE, 'w') as f:
-        json.dump(messages, f, indent=4)
-
-    await message.reply("Сообщение сохранено!")
+    with open(f"messages/chathistory{message.chat.id}.json", 'w', encoding='utf-8') as f:
+        json.dump(messages, f, ensure_ascii=False, indent=4)
 
 async def main():
     await dp.start_polling(bot)
