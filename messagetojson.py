@@ -1,71 +1,47 @@
 import json
-import logging
-import telebot
-from telebot import types
-from datetime import datetime
+import os
+import asyncio
+from aiogram import Bot, Dispatcher, types
+from aiogram.filters import Command
+from aiogram.types import Message
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-                    level=logging.INFO)
+API_TOKEN = '7000026321:AAGefkqhq_wUvj2WVTAsxgH8sM7YAo8dKY0'
+
+bot = Bot(token=API_TOKEN)
+dp = Dispatcher()
 
 MESSAGES_FILE = 'messages.json'
-TOKEN = '7000026321:AAGefkqhq_wUvj2WVTAsxgH8sM7YAo8dKY0'
 
-try:
-    with open(MESSAGES_FILE, 'r', encoding='utf-8') as f:
+if not os.path.exists(MESSAGES_FILE):
+    with open(MESSAGES_FILE, 'w') as f:
+        json.dump([], f)
+
+@dp.message(Command(commands=['start', 'help']))
+async def send_welcome(message: Message):
+    await message.reply("Привет! Отправь мне сообщение, и я сохраню его в JSON файл.")
+
+@dp.message()
+async def handle_message(message: Message):
+    with open(MESSAGES_FILE, 'r') as f:
         messages = json.load(f)
-except FileNotFoundError:
-    messages = []
 
-bot = telebot.TeleBot(TOKEN)
-
-@bot.message_handler(commands=['start'])
-def send_welcome(message):
-    bot.reply_to(message, 'Привет! Я буду сохранять все сообщения в этом чате.')
-
-@bot.message_handler(commands=['save'])
-def save_last_500_messages(message):
-    updates = bot.get_updates(offset=-1, limit=500)
-    saved_messages = []
-
-    for update in updates:
-        if 'message' in update:
-            msg = update.message
-            message_data = {
-                'message_id': msg.message_id,
-                'date': datetime.fromtimestamp(msg.date).isoformat(),
-                'chat_id': msg.chat.id,
-                'text': msg.text,
-                'user': {
-                    'id': msg.from_user.id,
-                    'username': msg.from_user.username,
-                    'first_name': msg.from_user.first_name,
-                    'last_name': msg.from_user.last_name
-                }
-            }
-            saved_messages.append(message_data)
-
-    with open(MESSAGES_FILE, 'w', encoding='utf-8') as f:
-        json.dump(saved_messages, f, indent=4, ensure_ascii=False)
-
-    bot.reply_to(message, 'Последние 500 сообщений сохранены в файл messages.json.')
-
-@bot.message_handler(func=lambda message: True)
-def save_message(message):
-    message_data = {
-        'message_id': message.message_id,
-        'date': datetime.fromtimestamp(message.date).isoformat(),
-        'chat_id': message.chat.id,
+    new_message = {
         'text': message.text,
-        'user': {
-            'id': message.from_user.id,
-            'username': message.from_user.username,
-            'first_name': message.from_user.first_name,
-            'last_name': message.from_user.last_name
-        }
+        'sender_username': message.from_user.username,
+        'sender_id': message.from_user.id,
+        'reply_to_username': message.reply_to_message.from_user.username if message.reply_to_message else None,
+        'reply_to_id': message.reply_to_message.from_user.id if message.reply_to_message else None,
+        'date': message.date.isoformat()
     }
-    messages.append(message_data)
-    with open(MESSAGES_FILE, 'w', encoding='utf-8') as f:
-        json.dump(messages, f, indent=4, ensure_ascii=False)
+    messages.append(new_message)
+
+    with open(MESSAGES_FILE, 'w') as f:
+        json.dump(messages, f, indent=4)
+
+    await message.reply("Сообщение сохранено!")
+
+async def main():
+    await dp.start_polling(bot)
 
 if __name__ == '__main__':
-    bot.polling(none_stop=True)
+    asyncio.run(main())
