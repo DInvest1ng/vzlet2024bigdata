@@ -4,10 +4,9 @@ import asyncio
 from aiogram import Bot, Dispatcher, types
 from aiogram.filters import Command
 from aiogram.types import Message
+import config
 
-API_TOKEN = '7000026321:AAGefkqhq_wUvj2WVTAsxgH8sM7YAo8dKY0'
-
-bot = Bot(token=API_TOKEN)
+bot = Bot(token=config.API_TOKEN)
 dp = Dispatcher()
 
 @dp.message()
