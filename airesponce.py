@@ -3,6 +3,7 @@ import urllib.request
 import json
 import config
 import requests
+import iam
 
 def answer(file):
     with open(file, "r") as f:
@@ -16,7 +17,7 @@ def answer(file):
 
 def speach2text(voice):
     FOLDER_ID = config.folder_id
-    IAM_TOKEN = config.API_TOKEN
+    IAM_TOKEN = iam.check()
 
     with open(voice, "rb") as f:
         data = f.read()
@@ -34,6 +35,6 @@ def speach2text(voice):
     decodedData = json.loads(responseData)
 
     if decodedData.get("error_code") is None:
-        print(decodedData.get("result"))
-
-speach2text("speech.ogg")
+        return decodedData.get("result")
+    else:
+        return "error"

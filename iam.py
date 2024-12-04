@@ -1,30 +1,24 @@
-import time
-import jwt
+import subprocess
 import json
+from datetime import datetime
+import datetime as dt
+import config
 
-with open('<JSON-файл_c_ключами>', 'r') as f: 
-  obj = f.read() 
-  obj = json.loads(obj)
-  private_key = obj['private_key']
-  key_id = obj['id']
-  service_account_id = obj['service_account_id']
+def write():
+    process = subprocess.Popen(config.bash_command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
 
-now = int(time.time())
-payload = {
-        'aud': 'https://iam.api.cloud.yandex.net/iam/v1/tokens',
-        'iss': service_account_id,
-        'iat': now,
-        'exp': now + 3600
-      }
+    response_data = json.loads(stdout.decode())
+    with open("iam.json", "w") as f:
+        json.dump(response_data, f)
 
-encoded_token = jwt.encode(
-    payload,
-    private_key,
-    algorithm='PS256',
-    headers={'kid': key_id}
-  )
+def check():
+    with open("iam.json", "r") as f:
+        data = json.load(f).get("expiresAt")[:16]
+        data = datetime.strptime(data, "%Y-%m-%dT%H:%M")
 
-with open('jwt_token.txt', 'w') as j:
-   j.write(encoded_token) 
+    if datetime.now().replace(second=0, microsecond=0) > data+ dt.timedelta(hours=3):
+        write()
 
-print(encoded_token)
+    with open("iam.json", "r") as f:
+        return json.load(f).get("iamToken")
