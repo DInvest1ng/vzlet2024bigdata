@@ -2,7 +2,7 @@ import json
 import os
 import asyncio
 from aiogram import Router, types, F
-from aiogram.filters import Command
+from aiogram.filters import Command, CommandStart
 from aiogram.types import Message
 from aiogram.filters.chat_member_updated import ChatMemberUpdatedFilter, IS_NOT_MEMBER, MEMBER, LEFT, KICKED, IS_MEMBER
 from dbconf import add_user, add_chat, add_user_to_chat, remove_user_from_chat
@@ -14,6 +14,13 @@ import aiofiles
 groups = Router()
 
 # MESSAGES
+@groups.message(F.chat.type.in_({"group", "supergroup"}), CommandStart())
+async def cmd_start(message: Message):
+    await message.answer(f'🤖 Slash Inator — это ваш помощник в мире информации! С его помощью вы сможете быстро и легко получать краткие выжимки из любой переписки. Идеально подходит для всех, кто ценит свое время.\n\nЧтобы получить перессказ отправь /summary')
+
+@groups.message(F.chat.type.in_({"group", "supergroup"}), Command(commands=['help']))
+async def cmd_start(message: Message):
+    await message.answer(f'🤖 Slash Inator — это ваш помощник в мире информации! С его помощью вы сможете быстро и легко получать краткие выжимки из любой переписки. Идеально подходит для всех, кто ценит свое время.\n\nЧтобы получить перессказ отправь /summary')
 
 # summary
 @groups.message(
@@ -88,8 +95,8 @@ async def handle_message(message: Message):
     }
     messages.append(new_message)
 
-    if len(messages) > 75:
-        messages = messages[-75:]
+    if len(messages) > 70:
+        messages = messages[-70:]
 
     with open(file_path, 'w', encoding='utf-8') as f:
         json.dump(messages, f, ensure_ascii=False, indent=4)

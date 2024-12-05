@@ -9,7 +9,7 @@ from aiogram.fsm.state import State, StatesGroup
 
 router = Router()
 
-@router.message(CommandStart())
+@router.message(F.chat.type == 'private', CommandStart())
 async def cmd_start(message: Message):
     await message.answer(f'Привет! Сначала пройдем обучение или сразу приступим к работе? В случае если что-то не понятно, всегда можно получить краткую выжимку из обучения по команде:\n\n/help', reply_markup=kb.ob_or_next)
 
